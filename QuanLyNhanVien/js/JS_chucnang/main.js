@@ -4,26 +4,25 @@
 
 //biến toàn cục
 var dsnv = new DanhSachNhanVien();
-var nv = new NhanVien();
-
+var validation = new Validation();
 
 
 //Hàm rút gọn cú pháp document.getElementById
-function getELE(id){
+function getELE(id) {
     //id: kiểu string
     return document.getElementById(id);
 }
 
-function setLocalStorage(){
+function setLocalStorage() {
     //chuyển dsnv.mangNV tu kiểu mảng sang kiểu Json
     localStorage.setItem("DSNV", JSON.stringify(dsnv.mangNV));
 }
 
 
 //lấy data từ LocalStorage để đẩy lên UI
-function getLocalStorage(){
+function getLocalStorage() {
     //getItem sẽ lấy dữ liệu lên là JSON => chuyển từ JSON sang kiểu mảng để hiển thị trên UI
-    if (localStorage.getItem("DSNV") != null){
+    if (localStorage.getItem("DSNV") != null) {
         dsnv.mangNV = JSON.parse(localStorage.getItem("DSNV"));
         hienThiTable(dsnv.mangNV);
     }
@@ -32,12 +31,12 @@ getLocalStorage();
 
 
 
-function hienThiTable(mang){
+function hienThiTable(mang) {
 
     var content = "";
 
     //item: 1 nhân viên; index: vị trí của pt trong mảng
-    mang.map(function(item,index){
+    mang.map(function (item, index) {
         content += `<tr>
         <td>${item.taiKhoan}</td>
         <td>${item.hoTenNV}</td>
@@ -58,7 +57,7 @@ function hienThiTable(mang){
     getELE("tableDanhSach").innerHTML = content;
 }
 
-function themNV(){
+function themNV() {
     //B1: lấy thông tin từ form
     var tk = getELE("tknv").value;
     var hoTen = getELE("name").value;
@@ -68,27 +67,60 @@ function themNV(){
     var luong = getELE("luongCB").value;
     var chucVu = getELE("chucvu").value;
     var gioLam = getELE("gioLam").value;
-    console.log(tk,hoTen,email,pass,ngaylam,luong,chucVu,gioLam);
+    console.log(tk, hoTen, email, pass, ngaylam, luong, chucVu, gioLam);
 
     //validation
+    var isValid = true;
+    //kiểm tra tài khoản
+    isValid &= validation.checkEmpty(tk, "tbTKNV", "Tài khoản nv không được để trống") && validation.checkID(tk, "tbTKNV", "Tài khoản nv bị trùng", dsnv.mangNV);
+    //kiểm tra tên
+    isValid &= validation.checkEmpty(hoTen, "tbTen", "Tên NV không được để trống") && validation.checkName(hoTen, "tbTen", "Tên NV phai la kí tự chữ");
+    //kiểm tra email
+    isValid &= validation.checkEmpty(email, "tbEmail", "Email không được để trống") && validation.checkEmail(email, "tbEmail", "Email không đúng định dạng");
+    //kiểm tra mật khẩu 
+    isValid &= validation.checkEmpty(pass, "tbMatKhau", "Mật khẩu không được để trống") && validation.checkPass(pass, "tbMatKhau", "Mật khẩu không đúng định dạng");
+    //kiểm tra ngày làm
+    isValid &= validation.checkEmpty(ngaylam, "tbNgay", "Ngày làm không được để trống") && validation.checkDate(ngaylam, "tbNgay", "Ngày làm không đúng định dạng");
+    //kiểm tra lương
+    isValid &= validation.checkSalary(luong, "tbLuongCB", "Lương cơ bản không đúng định dạng");
+    if (luong < 1000000 || luong > 20000000) {
+        getELE("tbLuongCB").innerHTML = "Lương cơ bản không được để trống và trong khoảng 1.000.000-20.000.000";
+        isValid = false;
+    }
+    //kiểm tra chức vụ
+    isValid &= validation.checkDropdown("chucvu", "tbChucVu", "Bạn chưa chọn chức vụ");
+    //kiểm tra giờ làm
+    isValid &= validation.checkHour(gioLam, "tbGiolam", "Giờ làm không đúng định dạng");
+    if (gioLam < 80 || gioLam > 200) {
+        getELE("tbGiolam").innerHTML = "Giờ làm không được để trống và trong khoảng 80-200 giờ";
+        isValid = false;
+    }
 
-    //B2: lưu thông tin vào lớp nhân viên
-    var nv = new NhanVien(tk,hoTen,email,pass,ngaylam,luong,chucVu,gioLam);
-    nv.tongLuong = nv.tinhTongLuong();
-    nv.loaiNV = nv.xepLoaiNV();
 
-    console.table(nv);
 
-    
-    //B3: Lưu sv vào danh sách nhân viên
-    dsnv.themNhanVien(nv);
-    console.log('mangnv', dsnv.mangNV);
 
-    //lưu mangSV xuống localStorage
-    setLocalStorage();
 
-    // B4: Hiển thị table
-    hienThiTable(dsnv.mangNV);
+    if (isValid) {
+        //B2: lưu thông tin vào lớp nhân viên
+        var nv = new NhanVien(tk, hoTen, email, pass, ngaylam, luong, chucVu, gioLam);
+        nv.tongLuong = nv.tinhTongLuong();
+        nv.loaiNV = nv.xepLoaiNV();
+
+        console.table(nv);
+
+
+        //B3: Lưu sv vào danh sách nhân viên
+        dsnv.themNhanVien(nv);
+        console.log('mangnv', dsnv.mangNV);
+
+        //lưu mangSV xuống localStorage
+        setLocalStorage();
+
+        // B4: Hiển thị table
+        hienThiTable(dsnv.mangNV);
+
+
+    }
 }
 
 /**
@@ -97,7 +129,7 @@ function themNV(){
  */
 
 
-function xoaNV(tk){
+function xoaNV(tk) {
     dsnv.xoaNhanVien(tk);
 
     hienThiTable(dsnv.mangNV);
@@ -111,7 +143,7 @@ function xoaNV(tk){
 
 
 
-function xemChiTiet(tk){
+function xemChiTiet(tk) {
     var viTri = dsnv.timViTri(tk);//tìm ra vị trí của nv
     var nv = dsnv.mangNV[viTri];//truy xuất vị trí của nv đó trong mảng => ta tìm được ptu mangNV[viTri] và gắn cho biến nv
     getELE("tknv").disabled = true;
@@ -126,7 +158,7 @@ function xemChiTiet(tk){
     getELE("gioLam").value = nv.gioLam;
 }
 
-function capNhatNV(){
+function capNhatNV() {
     //B1: lấy thông tin từ form
     var tk = getELE("tknv").value;
     var hoTen = getELE("name").value;
@@ -136,31 +168,68 @@ function capNhatNV(){
     var luong = getELE("luongCB").value;
     var chucVu = getELE("chucvu").value;
     var gioLam = getELE("gioLam").value;
-    console.log(tk,hoTen,email,pass,ngaylam,luong,chucVu,gioLam);
+    console.log(tk, hoTen, email, pass, ngaylam, luong, chucVu, gioLam);
 
-    //B2: lưu thông tin vào lớp nhân viên
-    var nv = new NhanVien(tk,hoTen,email,pass,ngaylam,luong,chucVu,gioLam);
-    nv.tongLuong = nv.tinhTongLuong();
-    nv.loaiNV = nv.xepLoaiNV();
-    
-    
-    dsnv.capNhatNhanVien(nv);
-    hienThiTable(dsnv.mangNV);
-    setLocalStorage();
+    //validation
+    var isValid = true;
+    //kiểm tra tên
+    isValid &= validation.checkEmpty(hoTen, "tbTen", "Tên NV không được để trống") && validation.checkName(hoTen, "tbTen", "Tên NV phai la kí tự chữ");
+    //kiểm tra email
+    isValid &= validation.checkEmpty(email, "tbEmail", "Email không được để trống") && validation.checkEmail(email, "tbEmail", "Email không đúng định dạng");
+    //kiểm tra mật khẩu 
+    isValid &= validation.checkEmpty(pass, "tbMatKhau", "Mật khẩu không được để trống") && validation.checkPass(pass, "tbMatKhau", "Mật khẩu không đúng định dạng");
+    //kiểm tra ngày làm
+    isValid &= validation.checkEmpty(ngaylam, "tbNgay", "Ngày làm không được để trống") && validation.checkDate(ngaylam, "tbNgay", "Ngày làm không đúng định dạng");
+    //kiểm tra lương
+    isValid &= validation.checkSalary(luong, "tbLuongCB", "Lương cơ bản không đúng định dạng");
+    if (luong < 1000000 || luong > 20000000) {
+        getELE("tbLuongCB").innerHTML = "Lương cơ bản không được để trống và trong khoảng 1.000.000-20.000.000";
+        isValid = false;
+    }
+    //kiểm tra chức vụ
+    isValid &= validation.checkDropdown("chucvu", "tbChucVu", "Bạn chưa chọn chức vụ");
+    //kiểm tra giờ làm
+    isValid &= validation.checkHour(gioLam, "tbGiolam", "Giờ làm không đúng định dạng");
+    if (gioLam < 80 || gioLam > 200) {
+        getELE("tbGiolam").innerHTML = "Giờ làm không được để trống và trong khoảng 80-200 giờ";
+        isValid = false;
+    }
+
+
+
+
+    if (isValid) {
+        //B2: lưu thông tin vào lớp nhân viên
+        var nv = new NhanVien(tk, hoTen, email, pass, ngaylam, luong, chucVu, gioLam);
+        nv.tongLuong = nv.tinhTongLuong();
+        nv.loaiNV = nv.xepLoaiNV();
+
+
+        dsnv.capNhatNhanVien(nv);
+        hienThiTable(dsnv.mangNV);
+        setLocalStorage();
+    }
 }
 
 /**
  * Reset
  */
- function resetForm() {
+function resetForm() {
     getELE("formQLNV").reset();
     getELE("tknv").disabled = false;
 }
 
 
-
-
-
+/**
+ * Tìm kiếm theo loai
+ * 
+ */
+function timKiemTheoLoai() {
+    var tuKhoaTK = getELE("searchName").value;
+    var mangKQ = dsnv.timKiem(tuKhoaTK);
+    hienThiTable(mangKQ);
+}
+getELE("searchName").addEventListener("keyup", timKiemTheoLoai);
 
 
 

@@ -38,9 +38,19 @@ function DanhSachNhanVien(){
             console.log("Không tìm được");
         }
     }
-
-
-
-
-
 }
+
+DanhSachNhanVien.prototype.timKiem = function(tuKhoaTK){
+    var mangKQ = [];
+    //chuyển tuKhoaTK sang kiểu thường
+    var lowerTK = tuKhoaTK.trim().toLowerCase();
+    this.mangNV.map(function(item,index){
+        var tenThuong = item.loaiNV.trim().toLowerCase();
+        var kq = tenThuong.indexOf(lowerTK);
+        if (kq >= 0){
+            mangKQ.push(item);
+        }
+    });
+    return mangKQ;
+}
+
